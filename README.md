@@ -1,19 +1,13 @@
 # Ejecución
 
-Ejecutar python -m app.main
+Crear archivo `.env`
 
-# AI Ticket Analyzer
+```env
+OPENAI_API_KEY=api_key
+MODEL=gpt-4o-mini
+```
 
-Proyecto integrador desarrollado en Python utilizando la API de OpenAI.
-
-La aplicación analiza tickets de soporte utilizando un LLM para:
-- clasificar el problema
-- detectar prioridad
-- resumir el incidente
-- generar una respuesta sugerida
-
-El sistema devuelve una salida estructurada en formato JSON lista para ser consumida por otros sistemas.
-
+Ejecutar: python -m src.run_query
 
 # Tecnologías utilizadas
 
@@ -29,16 +23,20 @@ El sistema devuelve una salida estructurada en formato JSON lista para ser consu
 ```text
 ai-ticket-analyzer/
 │
-├── app/
-│   ├── main.py
+├── src/
+│   ├── __init__.py
+│   ├── run_query.py
 │   ├── openai_client.py
-│   ├── prompt_builder.py
 │   ├── ticket_service.py
 │   ├── validators.py
 │   ├── metrics.py
-│   └── models.py
+│   ├── models.py
+│   └── safety.py
 │
-├── logs/
+├── prompts/
+│   └── main_prompt.txt
+│
+├── metrics/
 │   └── metrics.csv
 │
 ├── requirements.txt
@@ -49,95 +47,57 @@ ai-ticket-analyzer/
 
 ---
 
-# Funcionalidades
+# Observabilidad y métricas
 
-- Análisis automático de tickets
-- Clasificación de categoría
-- Detección de prioridad
-- Generación de resumen
-- Respuesta sugerida automática
-- Salida estructurada JSON
-- Validación con Pydantic
-- Registro de métricas
-- Manejo básico de errores
-- Protección básica contra prompt injection
+La aplicación registra métricas por ejecución para monitorear:
+- consumo de tokens
+- performance
+- costos estimados
 
----
+Las métricas registradas son:
+- `prompt_tokens`
+- `completion_tokens`
+- `total_tokens`
+- `latency_ms`
+- `estimated_cost_usd`
 
-# Técnica de Prompt Engineering utilizada
+La información se almacena en:
 
-Se utilizó una combinación de:
-
-## Role Prompting
-
-El modelo recibe el rol de:
-> "Senior Customer Support Analyst"
-
-Esto mejora consistencia y calidad de respuestas.
-
-
-## Low Temperature
-
-Se utilizó:
-```python
-temperature=0.2
-```
-
-para reducir:
-- alucinaciones
-- variabilidad
-- respuestas inconsistentes
-- JSON inválido
-
----
-
-# Modelo utilizado
-
-Modelo:
 ```text
-gpt-4.1-mini
+metrics/metrics.csv
 ```
 
-Motivos:
-- bajo costo
-- alta velocidad
-- buena capacidad de structured output
-- suficiente calidad para el MVP
+Esto permite:
+- analizar consumo y costos
+- medir tiempos de respuesta
+- auditar ejecuciones
+- comparar configuraciones del modelo
+- monitorear estabilidad del sistema
 
 ---
 
-# Salida estructurada
-
-La aplicación devuelve un contrato JSON estable:
+# Ejemplo de métricas registradas
 
 ```json
 {
-  "category": "Problema de Login",
-  "priority": "HIGH",
-  "summary": "El usuario no puede iniciar sesión.",
-  "suggested_response": "Por favor restablezca la contraseña nuevamente."
+  "prompt_tokens": 221,
+  "completion_tokens": 66,
+  "total_tokens": 287,
+  "latency_ms": 6021.19,
+  "estimated_cost_usd": 0.000073
 }
 ```
 
 ---
 
-# Métricas
+# Cálculo de costos
 
-El sistema registra:
-- tokens de entrada
-- tokens de salida
-- tokens totales
+Los costos estimados se calculan utilizando los precios públicos de OpenAI para el modelo `gpt-4o-mini`:
 
-Las métricas se almacenan en:
+- Input tokens: USD 0.15 por 1 millón de tokens
+- Output tokens: USD 0.60 por 1 millón de tokens
 
-```text
-logs/metrics.csv
-```
-
-Esto permite:
-- analizar consumo
-- estimar costos
-- auditar ejecuciones
+Los valores registrados son aproximados y se utilizan únicamente con fines de monitoreo y observabilidad.
 
 ---
 
@@ -160,3 +120,14 @@ Output:
 }
 ```
 
+# Tests
+
+El proyecto incluye tests básicos para validar:
+- estructura del JSON
+- validación del esquema de salida
+
+## Ejecutar tests
+
+```bash
+pytest
+```
